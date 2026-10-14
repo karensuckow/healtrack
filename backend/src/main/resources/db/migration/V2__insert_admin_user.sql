@@ -1,0 +1,2 @@
+INSERT INTO users (name, email, password, role, active, created_at)
+VALUES ('Admin', 'admin@healtrack.com', '$2a$12$euQp.j/VX3SMavmhe8QXZunyoK3hYoDGqYKW4mfOgj.IsTJzfKzyW', 'ROLE_ADMIN', true, CURRENT_TIMESTAMP);
