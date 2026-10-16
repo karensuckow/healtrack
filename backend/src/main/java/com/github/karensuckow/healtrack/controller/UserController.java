@@ -1,15 +1,22 @@
 package com.github.karensuckow.healtrack.controller;
 
+import com.github.karensuckow.healtrack.domain.user.dto.UpdatePasswordDTO;
 import com.github.karensuckow.healtrack.domain.user.dto.UpdateUserDTO;
 import com.github.karensuckow.healtrack.domain.user.dto.UserResponseDTO;
+import com.github.karensuckow.healtrack.domain.user.model.User;
 import com.github.karensuckow.healtrack.domain.user.model.UserRole;
 import com.github.karensuckow.healtrack.domain.user.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 
 @RestController
 @RequestMapping("/users")
@@ -20,11 +27,10 @@ public class UserController {
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<UserResponseDTO>> getAllUsers() {
-        List<UserResponseDTO> users = userService.getUsersByRole(UserRole.ROLE_USER);
-        if (users.isEmpty()) {
-            return ResponseEntity.noContent().build();
-        }
+    public ResponseEntity<Page<UserResponseDTO>> getAllUsers(
+            @PageableDefault(size = 10, sort = "name", direction = Sort.Direction.ASC) Pageable pageable) {
+
+        Page<UserResponseDTO> users = userService.getUsersByRole(UserRole.ROLE_USER, pageable);
         return ResponseEntity.ok(users);
     }
 
@@ -42,7 +48,7 @@ public class UserController {
 
     @PatchMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN') or principal.id == #id")
-    public ResponseEntity<UserResponseDTO> updateUserById(@PathVariable Long id, @RequestBody UpdateUserDTO data) {
+    public ResponseEntity<UserResponseDTO> updateUserById(@PathVariable Long id, @RequestBody @Valid UpdateUserDTO data) {
         return ResponseEntity.ok(userService.update(id, data));
     }
 
@@ -52,5 +58,15 @@ public class UserController {
         return ResponseEntity.ok(userService.reactivate(id));
     }
 
+    @PatchMapping("/{id}/password")
+    @PreAuthorize("hasRole('ADMIN') or principal.id == #id")
+    public ResponseEntity<UserResponseDTO> updatePassword(@PathVariable Long id, @RequestBody @Valid UpdatePasswordDTO data) {
+        return ResponseEntity.ok(userService.updatePassword(id, data.password()));
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<UserResponseDTO> getCurrentUser(@AuthenticationPrincipal User loggedUser) {
+        return ResponseEntity.ok(userService.getUser(loggedUser.getId()));
+    }
 
 }

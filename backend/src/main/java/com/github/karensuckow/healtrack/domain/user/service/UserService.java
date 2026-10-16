@@ -7,6 +7,8 @@ import com.github.karensuckow.healtrack.domain.user.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -18,23 +20,17 @@ public class UserService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private BCryptPasswordEncoder passwordEncoder;
+
     public UserResponseDTO getUser(Long id) {
         var user = userRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("User not found"));
         return new UserResponseDTO(user.getId(), user.getName(), user.getEmail(), user.getRole(), user.isEnabled());
     }
 
-    public List<UserResponseDTO> getUsersByRole(UserRole role) {
-        return userRepository.findAll()
-                .stream()
-                .filter(u -> u.getRole().equals(role))
-                .map(user -> new UserResponseDTO(
-                        user.getId(),
-                        user.getName(),
-                        user.getEmail(),
-                        user.getRole(),
-                        user.isEnabled()
-                ))
-                .toList();
+    public Page<UserResponseDTO> getUsersByRole(UserRole role, Pageable pageable) {
+        return userRepository.findAllByRole(role, pageable)
+                .map(user -> new UserResponseDTO(user.getId(), user.getName(), user.getEmail(), user.getRole(), user.isEnabled()));
     }
 
     @Transactional
@@ -47,12 +43,22 @@ public class UserService {
             }
         }
 
-        String encryptedPassword = null;
-        if(data.password() != null && !data.password().isBlank()) {
-            encryptedPassword = new BCryptPasswordEncoder().encode(data.password());
+        user.updateData(data.name(), data.email());
+
+        return new UserResponseDTO(user.getId(), user.getName(), user.getEmail(), user.getRole(), user.isEnabled());
+    }
+
+    @Transactional
+    public UserResponseDTO updatePassword(Long id, String newPassword) {
+        var user = userRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("User not found"));
+
+        if(newPassword == null || newPassword.isBlank()) {
+            throw new IllegalArgumentException("Password cannot be null or blank");
         }
 
-        user.updateData(data.name(), data.email(), encryptedPassword);
+        String encryptedPassword = passwordEncoder.encode(newPassword);
+
+        user.updatePassword(encryptedPassword);
 
         return new UserResponseDTO(user.getId(), user.getName(), user.getEmail(), user.getRole(), user.isEnabled());
     }

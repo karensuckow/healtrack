@@ -53,7 +53,7 @@ public class User implements UserDetails {
         this.active = active;
     }
 
-    public void updateData(String newName, String newEmail, String newPassword) {
+    public void updateData(String newName, String newEmail) {
         if (newName != null && !newName.isBlank()) {
             this.name = newName;
         }
@@ -62,10 +62,12 @@ public class User implements UserDetails {
             this.email = newEmail;
         }
 
+    }
+
+    public void updatePassword(String newPassword) {
         if (newPassword != null && !newPassword.isBlank()) {
             this.password = newPassword;
         }
-
     }
 
     public void setInactive() {

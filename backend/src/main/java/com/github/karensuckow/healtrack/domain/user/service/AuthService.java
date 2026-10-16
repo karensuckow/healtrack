@@ -25,6 +25,9 @@ public class AuthService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private BCryptPasswordEncoder passwordEncoder;
+
     public LoginResponseDTO authenticate(LoginRequestDTO data) {
         var usernamePassword = new UsernamePasswordAuthenticationToken(data.email(), data.password());
 
@@ -43,7 +46,7 @@ public class AuthService {
             throw new IllegalArgumentException("Email already exists");
         }
 
-        String encryptedPassword = new BCryptPasswordEncoder().encode(data.password());
+        String encryptedPassword = passwordEncoder.encode(data.password());
 
         var user = new User(data.name(), data.email(), encryptedPassword, UserRole.ROLE_USER, true);
         userRepository.save(user);
