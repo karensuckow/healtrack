@@ -20,8 +20,8 @@ CREATE TABLE working_hours (
 
 CREATE TABLE time_off (
     id BIGSERIAL PRIMARY KEY UNIQUE NOT NULL,
-    start_date DATE NOT NULL,
-    end_date DATE NOT NULL,
+    start_date TIMESTAMP NOT NULL,
+    end_date TIMESTAMP NOT NULL,
     reason VARCHAR(255)
 );
 
